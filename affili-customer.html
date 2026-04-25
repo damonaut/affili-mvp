@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affili — AI Advisor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080808;
+  --bg2: #0f0f0f;
+  --bg3: #161616;
+  --bg4: #1e1e1e;
+  --border: #222;
+  --border2: #2e2e2e;
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #444;
+  --accent: #ffffff;
+  --accent2: #e5e5e5;
+  --green: #4ade80;
+  --red: #f87171;
+  --amber: #fbbf24;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── LAYOUT ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  #app { max-width: 420px; }
+}
+
+/* ── NAVBAR ── */
+#navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.nav-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.nav-logo span {
+  color: var(--text3);
+}
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text2);
+  font-family: 'Space Mono', monospace;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+/* ── BRAND BAR ── */
+#brand-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+#brand-bar::-webkit-scrollbar { display: none; }
+
+.brand-tab {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  transition: all .15s;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 2px solid transparent;
+}
+
+.brand-tab:hover { color: var(--text2); background: var(--bg2); }
+.brand-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--bg2); }
+
+.brand-tab-add {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color .15s;
+  margin-left: auto;
+}
+.brand-tab-add:hover { color: var(--text2); }
+
+/* ── MESSAGES ── */
+#msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.msg {
+  max-width: 82%;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+  animation: fadeUp .2s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg.bot {
+  align-self: flex-start;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px 12px 12px 12px;
+  padding: 10px 14px;
+  color: var(--text);
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: var(--accent);
+  border-radius: 12px 2px 12px 12px;
+  padding: 10px 14px;
+  color: #000;
+  font-weight: 500;
+}
+
+.msg.typing {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px 12px 12px 12px;
+  padding: 12px 16px;
+  align-self: flex-start;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text3);
+  animation: blink 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: .2s; }
+.typing-dots span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: .2; }
+  40% { opacity: 1; }
+}
+
+/* ── PRODUCT CARD ── */
+.pkg {
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  background: var(--bg2);
+}
+.pkg-name { font-weight: 600; font-size: 13px; color: var(--text); }
+.pkg-price { font-size: 12px; color: var(--accent2); margin: 3px 0; font-family: 'Space Mono', monospace; }
+.pkg-bonus { font-size: 11px; color: var(--text2); }
+
+/* ── CTA BUTTONS ── */
+.ctas { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cta {
+  display: block;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: .02em;
+  transition: opacity .15s;
+}
+.cta:hover { opacity: .85; }
+.cta-white { background: #fff; color: #000; }
+.cta-wa { background: #25d366; color: #fff; }
+
+/* ── QUICK BUTTONS ── */
+#qbtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.qb {
+  font-size: 12px;
+  padding: 5px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.qb:hover { border-color: var(--text2); color: var(--text); }
+
+/* ── INPUT ROW ── */
+#input-row {
+  display: flex;
+  gap: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+#uinp {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  outline: none;
+  transition: border-color .15s;
+}
+#uinp:focus { border-color: var(--text3); }
+#uinp::placeholder { color: var(--text3); }
+
+#sbtn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 18px;
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: .04em;
+  transition: opacity .15s;
+}
+#sbtn:hover { opacity: .85; }
+
+/* ── FOOTER ── */
+#footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.footer-brand {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: 'Space Mono', monospace;
+}
+
+.reset-btn {
+  font-size: 10px;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  transition: color .12s;
+  background: none;
+  border: none;
+}
+.reset-btn:hover { color: var(--text2); }
+
+/* ── GEO DB: kecamatan/area Indonesia ── */
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="navbar">
+    <div class="nav-logo">AFFILI<span>.</span></div>
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      <span>AI ONLINE</span>
+    </div>
+  </div>
+
+  <div id="brand-bar">
+    <div class="brand-tab active" data-brand="ftl" onclick="switchBrand('ftl')">FTL GYM</div>
+    <div class="brand-tab" data-brand="property" onclick="switchBrand('property')">PROPERTI</div>
+    <div class="brand-tab" data-brand="skincare" onclick="switchBrand('skincare')">SKINCARE</div>
+    <div class="brand-tab-add" onclick="alert('Coming soon: tambah brand baru via dashboard admin')">+ BRAND</div>
+  </div>
+
+  <div id="msgs"></div>
+  <div id="qbtns"></div>
+
+  <div id="input-row">
+    <input id="uinp" type="text" placeholder="Ketik pesan kamu..." autocomplete="off" />
+    <button id="sbtn">KIRIM</button>
+  </div>
+
+  <div id="footer">
+    <span class="footer-brand">POWERED BY AFFILI AI</span>
+    <button class="reset-btn" onclick="resetChat()">↺ RESET</button>
+  </div>
+
+</div>
+
+<script>
+const CONFIGS = {
+  ftl: {
+    brandName: "FTL Gym",
+    affiliateLink: "https://selfregist.ftlgym.com/promo/adam",
+    whatsapp: "628994264262",
+    industry: "gym",
+    welcome: "Halo! Aku AI Advisor FTL Gym.\nBoleh kenalan dulu? Nama kamu siapa?",
+    questions: [
+      { key:"goal", text:"Kamu mau fokus ke apa di gym?", opts:["Nurunin berat badan","Bangun otot","Pengen sehat & bugar","Coba Pilates"] },
+      { key:"location", text:"Kamu tinggal atau sering aktivitas di area mana? Bisa ketik nama kecamatan, kelurahan, atau jalan kamu.", opts:["Jakarta Selatan","Jakarta Barat","Jakarta Timur","Bekasi","Bogor","Depok","Tangerang","Bandung"] },
+      { key:"experience", text:"Pernah gym sebelumnya?", opts:["Udah, lumayan rutin","Pernah tapi lama stop","Belum pernah sama sekali"] },
+      { key:"type", text:"Lebih suka gym biasa atau Pilates?", opts:["Gym biasa","Pilates","Keduanya"] },
+      { key:"budget", text:"Budget per bulan kamu sekitar berapa?", opts:["Di bawah 400K/bln","400–600K/bln","600K ke atas","Yang paling worth it"] },
+    ],
+    products: [
+      { name:"Blue 3 Bulan", pn:525, dur:3, price:"Rp525K/bln", total:"Rp2.099.000", bonus:"+1 bulan gratis", tags:["budget","short"] },
+      { name:"Blue 6 Bulan", pn:432, dur:6, price:"Rp432K/bln", total:"Rp3.450.000", bonus:"+2 bulan gratis + cashback Rp200K", tags:["budget","mid"] },
+      { name:"Blue 12 Bulan", pn:400, dur:12, price:"Rp400K/bln", total:"Rp5.588.000", bonus:"+2 bulan gratis + cashback Rp200K", tags:["budget","long"] },
+      { name:"Blue 15 Bulan", pn:381, dur:15, price:"Rp381K/bln", total:"Rp6.850.000", bonus:"+3 bulan gratis + cashback Rp200K", tags:["budget","vlong"] },
+      { name:"Ultra 6 Bulan", pn:530, dur:6, price:"Rp530K/bln", total:"Rp4.235.000", bonus:"+2 bulan gratis + cashback Rp200K", tags:["premium","mid"] },
+      { name:"Ultra 12 Bulan", pn:491, dur:12, price:"Rp491K/bln", total:"Rp6.870.000", bonus:"+2 bulan gratis + cashback Rp200K", tags:["premium","long"] },
+      { name:"Ultra 15 Bulan", pn:466, dur:15, price:"Rp466K/bln", total:"Rp8.380.000", bonus:"+3 bulan gratis + cashback Rp200K", tags:["premium","vlong"] },
+      { name:"Pilates+ 6 Bulan", pn:1317, dur:6, price:"Rp1.317K/bln", total:"Rp7.899.000", bonus:"Cashback Rp300K", tags:["pilates","mid"] },
+      { name:"Pilates+ 12 Bulan (2 sesi/minggu)", pn:899, dur:12, price:"Rp899K/bln", total:"Rp10.788.000", bonus:"+Welcome Pack PT + Cashback Rp300K", tags:["pilates","long","lite"] },
+      { name:"Pilates+ 12 Bulan (8 sesi/minggu)", pn:1134, dur:12, price:"Rp1.134K/bln", total:"Rp13.599.000", bonus:"Cashback Rp500K", tags:["pilates","long","full"] },
+    ],
+    branches: [
+      {name:"FTL Pajajaran Bogor",addr:"Jl. Raya Pajajaran No.38, Bogor",lat:-6.5727,lng:106.8087,rating:4.5,ultra:false},
+      {name:"FTL Pahlawan Bogor",addr:"Jl. Pahlawan No.34, Bogor Selatan",lat:-6.6080,lng:106.7966,rating:4.7,ultra:false},
+      {name:"FTL Depok Lama",addr:"Jl. Kartini No.14, Depok",lat:-6.4077,lng:106.8179,rating:4.6,ultra:false},
+      {name:"FTL Bekasi Timur",addr:"Jl. H. Juanda No.91, Bekasi Timur",lat:-6.2425,lng:107.0049,rating:4.7,ultra:false},
+      {name:"FTL Kalimalang",addr:"Jl. Raya Kalimalang No.68, Bekasi Barat",lat:-6.2495,lng:106.9553,rating:4.4,ultra:false},
+      {name:"FTL Pondok Gede",addr:"Jl. Raya Jati Makmur No.124, Pondok Gede",lat:-6.2843,lng:106.9259,rating:4.9,ultra:false},
+      {name:"FTL Gandaria",addr:"Jl. Gandaria 1 No.336, Kebayoran Baru",lat:-6.2430,lng:106.7877,rating:4.8,ultra:false},
+      {name:"FTL Satrio",addr:"Jl. Prof. DR. Satrio, Kuningan",lat:-6.2185,lng:106.8197,rating:4.8,ultra:true},
+      {name:"FTL Pasar Minggu",addr:"Jl. Raya Pasar Minggu No.25",lat:-6.2866,lng:106.8436,rating:4.7,ultra:false},
+      {name:"FTL Mampang",addr:"Jl. Mampang Prapatan Raya No.90",lat:-6.2495,lng:106.8261,rating:4.7,ultra:true},
+      {name:"FTL Tebet",addr:"Jl. Tebet Utara Dalam No.19",lat:-6.2265,lng:106.8547,rating:4.3,ultra:false},
+      {name:"FTL SCBD",addr:"Jl. Jend. Sudirman Kav 52-53, SCBD",lat:-6.2263,lng:106.8072,rating:4.7,ultra:true},
+      {name:"FTL Kemanggisan",addr:"Jl. Raya Kebun Jeruk No.18",lat:-6.1987,lng:106.7820,rating:4.7,ultra:false},
+      {name:"FTL Puri",addr:"Jl. Kembang Kerep No.3, Kembangan",lat:-6.1887,lng:106.7412,rating:4.3,ultra:false},
+      {name:"FTL Tanjung Duren",addr:"Jl. Tanjung Duren Raya No.21",lat:-6.1740,lng:106.7855,rating:4.5,ultra:false},
+      {name:"FTL Green Garden",addr:"Jl. Panjang Arteri Kelapa Dua Raya",lat:-6.1652,lng:106.7627,rating:4.8,ultra:false},
+      {name:"FTL Tomang",addr:"Jl. Tomang Raya No.40A",lat:-6.1765,lng:106.8013,rating:4.5,ultra:false},
+      {name:"FTL Pondok Bambu",addr:"Jl. Pahlawan Revolusi No.11, Duren Sawit",lat:-6.2184,lng:106.9001,rating:4.7,ultra:false},
+      {name:"FTL Rawamangun",addr:"Jl. Pemuda, Rawamangun",lat:-6.1932,lng:106.8961,rating:4.3,ultra:false},
+      {name:"FTL Menteng",addr:"Jl. H. Agus Salim No.65, Menteng",lat:-6.1878,lng:106.8253,rating:4.5,ultra:false},
+      {name:"FTL Bendungan Hilir",addr:"Jl. Bendungan Hilir No.118",lat:-6.2087,lng:106.8120,rating:4.5,ultra:false},
+      {name:"FTL Gading Sunter",addr:"Jl. Yos Sudarso No.84, Sunter",lat:-6.1536,lng:106.8865,rating:4.5,ultra:false},
+      {name:"FTL Gunung Sahari",addr:"Jl. Gunung Sahari No.14D, Pademangan",lat:-6.1401,lng:106.8334,rating:4.5,ultra:false},
+      {name:"FTL Cipondoh",addr:"Jl. KH. Hasyim Ashari No.26, Cipondoh, Tangerang",lat:-6.1849,lng:106.6454,rating:4.6,ultra:false},
+      {name:"FTL Dago Bandung",addr:"Jl. Ir. H. Juanda No.151, Dago, Bandung",lat:-6.8889,lng:107.6131,rating:4.5,ultra:false},
+      {name:"FTL Ahmad Yani Bandung",addr:"Jl. A. Yani No.254, Bandung",lat:-6.9169,lng:107.6284,rating:4.6,ultra:false},
+      {name:"FTL Pasir Koja Bandung",addr:"Jl. Terusan Pasirkoja No.275, Bandung",lat:-6.9289,lng:107.5810,rating:4.8,ultra:false},
+    ],
+    objections: {
+      price: { fn:(n,p)=>`Wajar banget ${n}! Tapi coba dipikir — ${p.name} itu cuma Rp${Math.round(p.pn*1000/30).toLocaleString('id')}/hari, lebih murah dari kopi kekinian 😄 Ditambah ada cashback yang langsung ngurangin biaya awal. Kamu nyamannya di budget berapa per bulan?`, opts:["Di bawah 400K/bln","400–500K/bln","Masih kemahalan","Bisa cicil?"] },
+      duration: { fn:(n)=>`Ngerti banget ${n}! Makanya ada paket 3 bulan buat yang mau coba dulu tanpa terikat lama. Kalau udah suka baru perpanjang — malah lebih hemat per bulannya. Mau coba yang 3 bulan dulu?`, opts:["Oke, 3 bulan dulu","Gimana 6 bulan?","Masih kelamaan"] },
+      doubt: { fn:(n)=>`Santai ${n}, gak ada yang buru-buru 😊 Apa yang bikin masih ragu? Fasilitas? Lokasi? Atau belum jelas soal paketnya?`, opts:["Takut gak konsisten","Belum tau fasilitasnya","Lokasi masih jauh","Cari info dulu aja"] },
+      location: { fn:(n)=>`Iya lokasi penting banget ${n}! Boleh kasih tau lebih spesifik kamu di sekitar mana? Nanti aku cariin 2 cabang FTL yang paling deket + jaraknya.`, opts:["Kasih tau areaku","Mau cek di Google Maps"] },
+    },
+    ctaText: "Daftar Sekarang via Link Adam",
+    waText: "Chat Adam di WhatsApp",
+  },
+  property: {
+    brandName: "Properti Idaman",
+    affiliateLink: "https://wa.me/628994264262",
+    whatsapp: "628994264262",
+    industry: "property",
+    welcome: "Halo! Aku AI Advisor Properti.\nBoleh kenalan dulu? Nama kamu siapa?",
+    questions: [
+      { key:"goal", text:"Kamu lagi cari properti untuk apa?", opts:["Hunian sendiri","Investasi","Keduanya"] },
+      { key:"location", text:"Area yang kamu inginkan?", opts:["Jakarta","Bekasi","Tangerang","Bogor","Depok","Bandung"] },
+      { key:"type", text:"Tipe properti yang dicari?", opts:["Apartemen","Rumah tapak","Ruko / komersil"] },
+      { key:"budget", text:"Budget kamu di kisaran berapa?", opts:["Di bawah 500 juta","500 juta – 1 M","1 M – 2 M","Di atas 2 M"] },
+    ],
+    products: [
+      { name:"Studio 21m² – Tower A", pn:350, dur:0, price:"Rp350 juta", total:"Rp350.000.000", bonus:"DP 10% + Free AC & Kitchen Set", tags:["budget","small"] },
+      { name:"1 BR 35m² – Tower B", pn:600, dur:0, price:"Rp600 juta", total:"Rp600.000.000", bonus:"DP 5% + Cashback Rp10 juta", tags:["mid","medium"] },
+      { name:"2 BR 55m² – Tower A", pn:950, dur:0, price:"Rp950 juta", total:"Rp950.000.000", bonus:"Free furnish + DP 10%", tags:["premium","large"] },
+      { name:"Rumah 6×12 – Cluster Melati", pn:800, dur:0, price:"Rp800 juta", total:"Rp800.000.000", bonus:"Subsidi KPR + Free BPHTB", tags:["mid","house"] },
+    ],
+    branches: [],
+    objections: {
+      price: { fn:(n,p)=>`Saya mengerti, ${n}. Dengan KPR 30 tahun, cicilan ${p.name} sekitar Rp3–4 juta/bulan — lebih murah dari sewa apartemen. Mau saya hitung simulasi KPR-nya?`, opts:["Simulasi KPR dong","Cicilan berapa/bulan?","Ada yang lebih murah?"] },
+      duration: { fn:(n)=>`Gak ada yang memaksa ${n}! Kita bisa jadwalkan kunjungan dulu tanpa komitmen apa pun. Mau pilih hari apa?`, opts:["Sabtu bisa","Minggu bisa","Hari kerja aja"] },
+      doubt: { fn:(n)=>`Wajar ${n}, beli properti itu keputusan besar. Apa yang paling bikin ragu? Lokasi, harga, atau kredibilitas developer?`, opts:["Gimana reputasi developernya?","Lokasi strategis gak?","Proses KPR ribet gak?"] },
+      location: { fn:(n)=>`Tentu ${n}! Lokasi yang strategis sangat penting. Bisa ceritakan lebih detail area yang kamu inginkan?`, opts:["Dekat stasiun / MRT","Dekat sekolah","Dekat kantor"] },
+    },
+    ctaText: "Lihat Unit & Harga Terbaru",
+    waText: "Konsultasi Langsung via WA",
+  },
+  skincare: {
+    brandName: "Glow Lab",
+    affiliateLink: "https://wa.me/628994264262",
+    whatsapp: "628994264262",
+    industry: "skincare",
+    welcome: "Halo! Aku Glow Advisor.\nSiap bantu kamu nemuin skincare yang paling cocok. Nama kamu siapa?",
+    questions: [
+      { key:"goal", text:"Masalah kulit utama kamu apa?", opts:["Jerawat & pori-pori","Kulit kusam","Penuaan dini","Kulit kering & sensitif"] },
+      { key:"type", text:"Tipe kulit kamu?", opts:["Berminyak","Kering","Kombinasi","Normal","Sensitif"] },
+      { key:"experience", text:"Sudah pernah pakai skincare sebelumnya?", opts:["Sudah, lumayan rutin","Pernah tapi gak konsisten","Baru mau mulai"] },
+      { key:"budget", text:"Budget skincare per bulan?", opts:["Di bawah 200K","200K – 500K","500K ke atas","Bebas, yang penting cocok"] },
+    ],
+    products: [
+      { name:"Starter Kit – Basic", pn:199, dur:1, price:"Rp199.000", total:"Rp199.000", bonus:"Free ongkir + sample serum", tags:["budget","beginner"] },
+      { name:"Glowing Set – 3 Step", pn:399, dur:1, price:"Rp399.000", total:"Rp399.000", bonus:"Gratis toner booster", tags:["mid","intermediate"] },
+      { name:"Anti-Aging Bundle", pn:699, dur:1, price:"Rp699.000", total:"Rp699.000", bonus:"Free konsultasi dermatologist online", tags:["premium","mature"] },
+      { name:"Acne Control Package", pn:349, dur:1, price:"Rp349.000", total:"Rp349.000", bonus:"Free spot treatment", tags:["mid","acne"] },
+    ],
+    branches: [],
+    objections: {
+      price: { fn:(n,p)=>`Harga ${p.name} kalau dihitung per hari cuma Rp${Math.round(p.pn*1000/30).toLocaleString('id')} loh ${n} — lebih murah dari skincare drugstore yang sering gonta-ganti dan gak cocok. Mau coba yang lebih budget-friendly dulu?`, opts:["Ada yang lebih murah?","Worth it gak?","Bisa trial dulu?"] },
+      duration: { fn:(n)=>`Gak apa ${n}! Skincare butuh konsistensi minimal 2–4 minggu buat kelihatan hasilnya. Mau mulai dari starter kit dulu sambil lihat hasilnya?`, opts:["Starter kit dulu deh","Berapa lama kelihatan hasilnya?","Ada garansi gak?"] },
+      doubt: { fn:(n)=>`Wajar ${n}! Kulit sensitif memang perlu hati-hati. Boleh cerita kulit kamu lebih detail? Nanti aku rekomendasiin yang paling aman.`, opts:["Kulitku sensitif banget","Takut breakout","Bahan-bahannya aman?"] },
+      location: { fn:(n)=>`Tentu ${n}! Pengiriman ke seluruh Indonesia. Mau tanya soal estimasi pengiriman ke areamu?`, opts:["Berapa hari sampai?","Ada toko offline gak?"] },
+    },
+    ctaText: "Order Sekarang",
+    waText: "Konsultasi via WA",
+  }
+};
+
+const GEO = [
+  {k:["kramat jati","kramat","jatinegara"],lat:-6.2741,lng:106.8719},
+  {k:["duren sawit","pondok bambu"],lat:-6.2184,lng:106.9001},
+  {k:["rawamangun","pulo gadung","pulogadung"],lat:-6.1932,lng:106.8961},
+  {k:["cakung","cilincing"],lat:-6.1853,lng:106.9526},
+  {k:["makasar","cipayung","ciracas","pasar rebo"],lat:-6.3072,lng:106.8928},
+  {k:["condet","klender"],lat:-6.2088,lng:106.9259},
+  {k:["tebet"],lat:-6.2266,lng:106.8547},
+  {k:["pasar minggu","pasarminggu"],lat:-6.2866,lng:106.8436},
+  {k:["mampang","tegal parang"],lat:-6.2496,lng:106.8261},
+  {k:["gandaria","kebayoran baru","kby baru","kebayoran"],lat:-6.2430,lng:106.7877},
+  {k:["kuningan","satrio","setiabudi","scbd","sudirman","senayan"],lat:-6.2263,lng:106.8072},
+  {k:["cilandak","pesanggrahan","jagakarsa"],lat:-6.3094,lng:106.7997},
+  {k:["kebayoran lama","kby lama"],lat:-6.2465,lng:106.7806},
+  {k:["pancoran","kalibata"],lat:-6.2518,lng:106.8489},
+  {k:["menteng","gondangdia"],lat:-6.1878,lng:106.8253},
+  {k:["bendungan hilir","benhil","tanah abang"],lat:-6.2087,lng:106.8120},
+  {k:["gambir","monas"],lat:-6.1772,lng:106.8219},
+  {k:["kemayoran","cempaka putih"],lat:-6.1644,lng:106.8581},
+  {k:["johar baru","sawah besar","senen"],lat:-6.1773,lng:106.8452},
+  {k:["tanjung duren","tj duren","grogol","petamburan"],lat:-6.1740,lng:106.7855},
+  {k:["kemanggisan","kebun jeruk","kbn jeruk"],lat:-6.1987,lng:106.7820},
+  {k:["puri","kembangan"],lat:-6.1888,lng:106.7412},
+  {k:["green garden","kedoya","kelapa dua"],lat:-6.1652,lng:106.7627},
+  {k:["tomang","palmerah"],lat:-6.1765,lng:106.8013},
+  {k:["cengkareng","kalideres"],lat:-6.1479,lng:106.7029},
+  {k:["tambora"],lat:-6.1448,lng:106.8092},
+  {k:["sunter","gading","tanjung priok","tj priok"],lat:-6.1536,lng:106.8865},
+  {k:["gunung sahari","pademangan"],lat:-6.1401,lng:106.8334},
+  {k:["koja","penjaringan","kelapa gading"],lat:-6.1212,lng:106.9024},
+  {k:["bekasi timur","bekasi barat","bekasi selatan","bekasi utara","bekasi kota","bekasi"],lat:-6.2349,lng:106.9946},
+  {k:["pondok gede","jatimakmur"],lat:-6.2843,lng:106.9259},
+  {k:["kalimalang"],lat:-6.2495,lng:106.9553},
+  {k:["tambun","cikarang","cibitung"],lat:-6.2321,lng:107.0396},
+  {k:["bogor utara","pajajaran"],lat:-6.5727,lng:106.8087},
+  {k:["bogor selatan","bogor barat","bogor tengah","bogor timur","bogor"],lat:-6.5828,lng:106.7923},
+  {k:["cibinong","parung"],lat:-6.4791,lng:106.8597},
+  {k:["depok lama","pancoran mas","depok"],lat:-6.4077,lng:106.8179},
+  {k:["beji","sukmajaya","sawangan","cimanggis"],lat:-6.3833,lng:106.8300},
+  {k:["cipondoh","tangerang"],lat:-6.1849,lng:106.6454},
+  {k:["serpong","tangsel","tangerang selatan","bsd","alam sutera","gading serpong"],lat:-6.3194,lng:106.6717},
+  {k:["bintaro"],lat:-6.2839,lng:106.7474},
+  {k:["ciledug","larangan"],lat:-6.2246,lng:106.7031},
+  {k:["dago","coblong"],lat:-6.8889,lng:107.6131},
+  {k:["ahmad yani","batununggal"],lat:-6.9169,lng:107.6284},
+  {k:["pasir koja","babakan ciparay"],lat:-6.9289,lng:107.5810},
+  {k:["bandung"],lat:-6.9175,lng:107.6191},
+  {k:["surabaya"],lat:-7.2575,lng:112.7521},
+  {k:["bali","denpasar","kuta"],lat:-8.4095,lng:115.1889},
+];
+
+function geocodeLocal(text) {
+  const t = text.toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
+  const words = t.split(' ');
+  for(let len = 4; len >= 1; len--) {
+    for(let i = 0; i <= words.length - len; i++) {
+      const phrase = words.slice(i, i+len).join(' ');
+      for(const g of GEO) {
+        if(g.k.some(k => k === phrase || phrase.includes(k) || k.includes(phrase))) {
+          return { lat: g.lat, lng: g.lng };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function haversine(lat1,lng1,lat2,lng2) {
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return +(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1);
+}
+
+function getNearest(lat, lng, branches, n) {
+  return branches.map(b=>({...b, dist: haversine(lat,lng,b.lat,b.lng)})).sort((a,b)=>a.dist-b.dist).slice(0,n||2);
+}
+
+let cfg = CONFIGS.ftl;
+let prof = {};
+let step = 0;
+let qIdx = 0;
+let waitingForAddress = false;
+
+const msgsEl = document.getElementById('msgs');
+const qEl = document.getElementById('qbtns');
+const inp = document.getElementById('uinp');
+
+function scroll() { msgsEl.scrollTop = msgsEl.scrollHeight; }
+
+function addMsg(txt, role, html) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  if(html) d.innerHTML = txt; else d.textContent = txt;
+  msgsEl.appendChild(d); scroll(); return d;
+}
+
+function showTyping() {
+  const d = document.createElement('div');
+  d.className = 'msg typing'; d.id = 'tdot';
+  d.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgsEl.appendChild(d); scroll();
+}
+function removeTyping() { const e = document.getElementById('tdot'); if(e) e.remove(); }
+
+function bot(txt, html, delay) {
+  showTyping();
+  setTimeout(() => { removeTyping(); addMsg(txt, 'bot', html); }, delay || 500);
+}
+
+function setQ(opts) {
+  qEl.innerHTML = '';
+  (opts||[]).forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'qb'; b.textContent = o;
+    b.onclick = () => handle(o);
+    qEl.appendChild(b);
+  });
+}
+
+function detectTone(msg) {
+  return /\b(saya|mohon|apakah|hendak|ingin|terima kasih)\b/.test(msg.toLowerCase()) ? 'formal' : 'casual';
+}
+
+function pickProducts() {
+  const budget = (prof.budget||'').toLowerCase();
+  const type = (prof.type||'').toLowerCase();
+  const isLow = budget.includes('bawah') || budget.includes('200') || budget.includes('400');
+  const isHigh = budget.includes('atas') || budget.includes('bebas') || budget.includes('600') || budget.includes('2 m');
+  const isPilates = type.includes('pilates');
+
+  let pool = cfg.products;
+  if(isPilates) pool = pool.filter(p => p.tags.includes('pilates'));
+  else if(isHigh) pool = pool.filter(p => p.tags.includes('premium') || p.tags.includes('large'));
+  else if(isLow) pool = pool.filter(p => p.tags.includes('budget') || p.tags.includes('small'));
+  if(!pool.length) pool = cfg.products;
+  return pool.slice(0, 2);
+}
+
+function pkgCard(pk) {
+  return `<div class="pkg">
+    <div class="pkg-name">${pk.name}</div>
+    <div class="pkg-price">${pk.price}${pk.total !== pk.price ? ' · Total ' + pk.total : ''}</div>
+    <div class="pkg-bonus">${pk.bonus}</div>
+  </div>`;
+}
+
+function branchCard(b) {
+  const stars = '★'.repeat(Math.round(b.rating)) + '☆'.repeat(5-Math.round(b.rating));
+  const ultra = b.ultra ? ' <span style="font-size:10px;background:#7c3aed;color:#fff;padding:1px 5px;border-radius:3px">ULTRA</span>' : '';
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent((prof.rawAddress||'') + ', Indonesia')}&destination=${encodeURIComponent(b.name + ', ' + b.addr + ', Indonesia')}&travelmode=driving`;
+  return `<div class="pkg">
+    <div class="pkg-name">${b.name}${ultra}</div>
+    <div class="pkg-bonus" style="margin:2px 0">${b.addr}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+      <span style="font-size:11px;color:#888">${stars} ${b.rating} · 24 jam</span>
+      ${b.dist != null ? `<span style="font-size:12px;color:#fff;font-family:'Space Mono',monospace">${b.dist} km</span>` : ''}
+    </div>
+    <a href="${mapsUrl}" target="_blank" style="display:inline-block;margin-top:7px;background:#1a73e8;color:#fff;font-size:11px;padding:4px 10px;border-radius:4px;text-decoration:none;font-family:'Space Mono',monospace">MAPS →</a>
+  </div>`;
+}
+
+function ctaBlock() {
+  const waMsg = encodeURIComponent(`Halo! Aku ${prof.name||''} mau tanya soal ${cfg.brandName}`);
+  return `<div class="ctas">
+    <a class="cta cta-white" href="${cfg.affiliateLink}" target="_blank">${cfg.ctaText}</a>
+    <a class="cta cta-wa" href="https://wa.me/${cfg.whatsapp}?text=${waMsg}" target="_blank">${cfg.waText}</a>
+  </div>`;
+}
+
+function buildRecoMsg() {
+  const picks = pickProducts();
+  const name = prof.name || 'kamu';
+  const T = prof.tone === 'formal';
+  const nearInfo = prof.nearestBranch ? `<div style="font-size:11px;color:#888;margin:4px 0 2px;font-family:'Space Mono',monospace">CABANG TERDEKAT: ${prof.nearestBranch}</div>` : '';
+  const intro = T
+    ? `Berdasarkan informasi Anda, ini rekomendasi terbaik dari ${cfg.brandName}, ${name}:`
+    : `Oke ${name}! Ini rekomendasi paling pas dari ${cfg.brandName} buat kamu:`;
+  return intro + nearInfo + picks.map(pkgCard).join('') + '<br>' + ctaBlock();
+}
+
+function handleRejection(msg) {
+  const m = msg.toLowerCase();
+  const name = prof.name || 'kamu';
+  const picks = pickProducts();
+  const cheapest = [...picks].sort((a,b) => a.pn - b.pn)[0] || cfg.products[0];
+
+  if(m.includes('mahal') || m.includes('kemahalan') || m.includes('berat di budget') || m.includes('mahal banget')) {
+    const obj = cfg.objections.price;
+    bot(obj.fn(name, cheapest), false, 500);
+    setTimeout(() => setQ(obj.opts), 1000);
+    return true;
+  }
+  if(m.includes('lama') || m.includes('kelamaan') || (m.includes('panjang') && m.includes('durasi'))) {
+    const obj = cfg.objections.duration;
+    bot(obj.fn(name, cheapest), false, 500);
+    setTimeout(() => setQ(obj.opts), 1000);
+    return true;
+  }
+  if(m.includes('ragu') || m.includes('pikir-pikir') || m.includes('pikir dulu') || (m.includes('belum') && m.includes('yakin')) || m.includes('pertimbang')) {
+    const obj = cfg.objections.doubt;
+    bot(obj.fn(name), false, 500);
+    setTimeout(() => setQ(obj.opts), 1000);
+    return true;
+  }
+  if((m.includes('jauh') || m.includes('lokasi') || m.includes('cabang')) && !m.includes('ada')) {
+    if(prof.userLat && prof.userLng && cfg.branches.length) {
+      const nearest = getNearest(prof.userLat, prof.userLng, cfg.branches, 2);
+      const cards = nearest.map(b => branchCard(b)).join('');
+      bot('Ini 2 cabang terdekat dari kamu:', false, 400);
+      setTimeout(() => { removeTyping(); addMsg(cards, 'bot', true); }, 500);
+    } else {
+      const obj = cfg.objections.location;
+      bot(obj.fn(name), false, 500);
+      setTimeout(() => setQ(obj.opts), 1000);
+    }
+    return true;
+  }
+  return false;
+}
+
+function processLocation(address) {
+  prof.rawAddress = address;
+  const geo = geocodeLocal(address);
+
+  if(!geo) {
+    bot(`Hmm, aku belum punya data koordinat untuk area "<b>${address}</b>" nih.\n\nCoba sebutkan nama kecamatan atau kelurahan kamu — contoh: "Kramat Jati", "Tebet", "Depok Lama", atau pilih di bawah:`, true, 400);
+    setQ(['Jakarta Selatan','Jakarta Timur','Jakarta Barat','Jakarta Pusat','Bekasi','Bogor','Depok','Tangerang','Bandung']);
+    waitingForAddress = true;
+    return false;
+  }
+
+  prof.userLat = geo.lat;
+  prof.userLng = geo.lng;
+  waitingForAddress = false;
+
+  if(cfg.branches.length) {
+    const nearest = getNearest(geo.lat, geo.lng, cfg.branches, 2);
+    prof.nearestBranch = nearest[0] ? nearest[0].name : '';
+    const T = prof.tone === 'formal';
+    const intro = T
+      ? `Berdasarkan area <b>${address}</b>, ini 2 cabang ${cfg.brandName} terdekat:`
+      : `Ketemu! Berdasarkan area <b>${address}</b>, ini 2 cabang paling deket dari kamu:`;
+    showTyping();
+    setTimeout(() => {
+      removeTyping();
+      addMsg(intro + nearest.map(b => branchCard(b)).join(''), 'bot', true);
+    }, 500);
+    return true;
+  }
+  return true;
+}
+
+function handle(raw) {
+  const msg = raw.trim();
+  if(!msg) return;
+  addMsg(msg, 'user');
+  inp.value = ''; qEl.innerHTML = '';
+  if(!prof.tone) prof.tone = detectTone(msg);
+  const m = msg.toLowerCase();
+  const T = prof.tone === 'formal';
+  const name = prof.name || 'kamu';
+
+  if(step === 0) {
+    prof.name = msg.trim().split(' ').pop();
+    step = 1; qIdx = 0;
+    const q = cfg.questions[qIdx];
+    bot(`Hai ${prof.name}! Seneng kenalan 😊\n\n${q.text}`, false, 400);
+    setTimeout(() => setQ(q.opts), 900);
+    return;
+  }
+
+  if(step === 1) {
+    if(waitingForAddress) {
+      const ok = processLocation(msg);
+      if(ok) {
+        waitingForAddress = false;
+        const nextQ = cfg.questions[qIdx];
+        if(nextQ) {
+          setTimeout(() => { bot(nextQ.text, false, 300); setTimeout(() => setQ(nextQ.opts), 800); }, 900);
+        } else {
+          step = 2;
+          setTimeout(() => { bot(buildRecoMsg(), true, 400); setTimeout(() => setQ(['Oke, mau lanjut!','Kemahalan nih','Masih mau pikir dulu','Lihat semua pilihan']), 900); }, 900);
+        }
+      }
+      return;
+    }
+
+    const q = cfg.questions[qIdx];
+    prof[q.key] = msg;
+
+    if(q.key === 'location' && cfg.branches.length) {
+      const ok = processLocation(msg);
+      qIdx++;
+      if(qIdx < cfg.questions.length) {
+        const nextQ = cfg.questions[qIdx];
+        const delay = ok ? 1200 : 600;
+        setTimeout(() => { bot(nextQ.text, false, 300); setTimeout(() => setQ(nextQ.opts), 800); }, delay);
+      } else {
+        step = 2;
+        const delay = ok ? 1200 : 600;
+        setTimeout(() => { bot(buildRecoMsg(), true, 400); setTimeout(() => setQ(['Oke, mau lanjut!','Kemahalan nih','Masih mau pikir dulu','Lihat semua pilihan']), 900); }, delay);
+      }
+      return;
+    }
+
+    qIdx++;
+    if(qIdx < cfg.questions.length) {
+      const nextQ = cfg.questions[qIdx];
+      bot(nextQ.text, false, 400);
+      setTimeout(() => setQ(nextQ.opts), 900);
+    } else {
+      step = 2;
+      bot(buildRecoMsg(), true, 600);
+      setTimeout(() => setQ(['Oke, mau lanjut!','Kemahalan nih','Masih mau pikir dulu','Lihat semua pilihan']), 1100);
+    }
+    return;
+  }
+
+  if(step >= 2) {
+    const isClosing = (m.includes('lanjut') || m.includes('oke') || m.includes('gas') || m.includes('daftar') || m.includes('order') || m.includes('mau'))
+      && !m.includes('mahal') && !m.includes('ragu') && !m.includes('pikir') && !m.includes('belum');
+    if(isClosing) {
+      bot(`Yeay ${name}! Gas langsung ya 🔥`, false, 400);
+      setTimeout(() => addMsg(ctaBlock(), 'bot', true), 700);
+      return;
+    }
+    if(m.includes('semua') || m.includes('pilihan lain') || m.includes('opsi lain')) {
+      bot(`Ini semua produk ${cfg.brandName}:` + cfg.products.map(pkgCard).join('') + '<br>' + ctaBlock(), true, 400);
+      return;
+    }
+    if(m.includes('fasilitas') || m.includes('apa aja') || m.includes('keunggulan')) {
+      bot(T
+        ? `${cfg.brandName} menyediakan fasilitas lengkap, staf profesional, dan akses 24 jam di semua cabang.`
+        : `${cfg.brandName} punya fasilitas lengkap, staf ramah, dan buka 24 jam di semua cabang! 💪`,
+        false, 400);
+      setTimeout(() => setQ(['Wah lengkap!','Berapa harganya?','Mau daftar sekarang']), 900);
+      return;
+    }
+    if(!handleRejection(msg)) {
+      bot(T
+        ? `Ada hal lain yang ingin ditanyakan? ${ctaBlock()}`
+        : `Ada yang mau ditanyain lagi? 😊 ${ctaBlock()}`, true, 400);
+      setQ(['Lihat semua produk','Mau daftar sekarang','Ada pertanyaan lain']);
+    }
+  }
+}
+
+function switchBrand(brand) {
+  cfg = CONFIGS[brand];
+  document.querySelectorAll('.brand-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-brand="${brand}"]`).classList.add('active');
+  resetChat();
+}
+
+function resetChat() {
+  prof = {}; step = 0; qIdx = 0; waitingForAddress = false;
+  msgsEl.innerHTML = ''; qEl.innerHTML = '';
+  setTimeout(() => {
+    addMsg(cfg.welcome, 'bot');
+    setQ(cfg.questions[0].opts.slice(0, 4));
+  }, 200);
+}
+
+document.getElementById('sbtn').onclick = () => handle(inp.value);
+inp.addEventListener('keydown', e => { if(e.key === 'Enter') handle(inp.value); });
+
+resetChat();
+</script>
+</body>
+</html>

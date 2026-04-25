@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affili — Commission Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{--bg:#080808;--bg2:#0f0f0f;--bg3:#161616;--bg4:#1e1e1e;--border:#222;--border2:#2e2e2e;--text:#f0f0f0;--text2:#888;--text3:#444;--accent:#fff;--green:#4ade80;--red:#f87171;--amber:#fbbf24;--blue:#60a5fa;--purple:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100}
+.logo{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.08em}
+.logo span{color:var(--text3)}
+.nav-tabs{display:flex;gap:0}
+.nav-tab{padding:6px 14px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border:1px solid transparent;border-radius:4px;font-family:'Space Mono',monospace;letter-spacing:.04em;transition:all .12s}
+.nav-tab.active,.nav-tab:hover{color:var(--text);background:var(--bg3);border-color:var(--border2)}
+.nav-tab.active{border-color:var(--text3)}
+
+/* LAYOUT */
+#main{max-width:1100px;margin:0 auto;padding:24px}
+.page{display:none}.page.active{display:block}
+
+/* SECTION HEADER */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.sec-title{font-size:18px;font-weight:500}
+.btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:.04em;transition:all .12s;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:.85}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text3)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid #7f1d1d}
+.btn-danger:hover{background:#7f1d1d20}
+.btn-green{background:#166534;color:var(--green);border:1px solid #166534}
+.btn-green:hover{background:#14532d}
+.btn-amber{background:#78350f;color:var(--amber);border:1px solid #78350f}
+.btn-amber:hover{background:#92400e}
+.btn-blue{background:#1e3a5f;color:var(--blue);border:1px solid #1e3a5f}
+.btn-blue:hover{background:#1e40af30}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.stat-label{font-size:11px;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:.04em;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:600}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* TABLE */
+.tbl-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--bg3);border-bottom:1px solid var(--border)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:.04em;white-space:nowrap}
+td{padding:11px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.td-mono{font-family:'Space Mono',monospace;font-size:12px}
+.td-muted{color:var(--text2);font-size:12px}
+
+/* BADGE */
+.badge{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;font-family:'Space Mono',monospace}
+.badge-green{background:#14532d;color:var(--green)}
+.badge-amber{background:#78350f;color:var(--amber)}
+.badge-red{background:#7f1d1d;color:var(--red)}
+.badge-blue{background:#1e3a5f;color:var(--blue)}
+.badge-gray{background:var(--bg4);color:var(--text2)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2)}
+.modal-title{font-size:15px;font-weight:500}
+.modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;line-height:1;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--bg2)}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-family:'Space Mono',monospace;letter-spacing:.04em}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .12s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--text3)}
+.form-group select option{background:var(--bg3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-note{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5}
+
+/* CLAIM TABLE */
+.claim-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.claim-item:last-child{border-bottom:none}
+.claim-cb{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+.claim-name{flex:1;font-size:13px}
+.claim-price{font-size:12px;color:var(--text2);font-family:'Space Mono',monospace}
+.claim-comm{font-size:12px;color:var(--green);font-family:'Space Mono',monospace;min-width:100px;text-align:right}
+.claim-qty{width:50px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-size:12px;color:var(--text);text-align:center}
+
+/* CSV DROP */
+.csv-drop{border:1px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .12s}
+.csv-drop:hover,.csv-drop.drag{border-color:var(--text3)}
+.csv-drop p{font-size:13px;color:var(--text2);margin-bottom:4px}
+.csv-drop small{font-size:11px;color:var(--text3)}
+
+/* CLAIM SUMMARY */
+.claim-summary{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:14px}
+.cs-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.cs-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-weight:600;font-size:14px}
+.cs-label{color:var(--text2)}
+.cs-val{font-family:'Space Mono',monospace}
+.cs-val.green{color:var(--green)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:13px;padding:10px 18px;border-radius:8px;display:none;z-index:300;font-family:'Space Grotesk',sans-serif}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  nav{padding:12px 16px}
+  .nav-tabs .nav-tab{padding:5px 10px;font-size:11px}
+  #main{padding:16px}
+  .form-row{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">AFFILI<span>.</span>ADMIN</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('catalog')">KATALOG</div>
+    <div class="nav-tab" onclick="showPage('sales')">PENJUALAN</div>
+    <div class="nav-tab" onclick="showPage('claims')">KLAIM</div>
+  </div>
+</nav>
+
+<div id="main">
+
+<!-- PAGE 1: CATALOG -->
+<div class="page active" id="page-catalog">
+  <div class="sec-header">
+    <div class="sec-title">Katalog Produk</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="openCsvModal()">↑ IMPORT CSV</button>
+      <button class="btn btn-ghost" onclick="exportCatalogCsv()">↓ EXPORT CSV</button>
+      <button class="btn btn-primary" onclick="openProductModal()">+ PRODUK BARU</button>
+    </div>
+  </div>
+
+  <div class="stats" id="catalog-stats"></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Produk</th>
+          <th>Brand</th>
+          <th>Harga Jual</th>
+          <th>Komisi</th>
+          <th>Komisi (Rp)</th>
+          <th>Total Terjual</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="catalog-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGE 2: SALES -->
+<div class="page" id="page-sales">
+  <div class="sec-header">
+    <div class="sec-title">Catat Penjualan</div>
+    <button class="btn btn-primary" onclick="openSaleModal()">+ CATAT PENJUALAN</button>
+  </div>
+
+  <div class="stats" id="sales-stats"></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Produk</th>
+          <th>Brand</th>
+          <th>Pembeli</th>
+          <th>Qty</th>
+          <th>Harga Jual</th>
+          <th>Komisi</th>
+          <th>Status Klaim</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="sales-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGE 3: CLAIMS -->
+<div class="page" id="page-claims">
+  <div class="sec-header">
+    <div class="sec-title">Pengajuan Klaim Komisi</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-blue" onclick="openClaimModal()">BUAT KLAIM BARU</button>
+    </div>
+  </div>
+
+  <div class="stats" id="claims-stats"></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>No. Klaim</th>
+          <th>Tanggal</th>
+          <th>Brand</th>
+          <th>Items</th>
+          <th>Total Komisi</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="claims-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL: Add Product -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="product-modal-title">Tambah Produk Baru</span>
+      <button class="modal-close" onclick="closeModal('modal-product')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Brand</label>
+        <select id="p-brand">
+          <option>FTL Gym</option>
+          <option>Properti Idaman</option>
+          <option>Glow Lab</option>
+          <option>+ Brand Lain</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nama Produk</label>
+        <input type="text" id="p-name" placeholder="contoh: Blue Membership 6 Bulan">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Harga Jual (Rp)</label>
+          <input type="number" id="p-price" placeholder="3450000">
+        </div>
+        <div class="form-group">
+          <label>Durasi / Unit</label>
+          <input type="text" id="p-unit" placeholder="6 bulan / item / pcs">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipe Komisi</label>
+          <select id="p-comm-type" onchange="updateCommPreview()">
+            <option value="pct">Persentase (%)</option>
+            <option value="flat">Nominal flat (Rp)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nilai Komisi</label>
+          <input type="number" id="p-comm-val" placeholder="10" oninput="updateCommPreview()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Preview Komisi</label>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--green);font-family:'Space Mono',monospace" id="comm-preview">Masukkan harga & nilai komisi di atas</div>
+      </div>
+      <div class="form-group">
+        <label>Catatan (opsional)</label>
+        <input type="text" id="p-note" placeholder="Berlaku untuk paket promo April 2026">
+      </div>
+      <input type="hidden" id="p-edit-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-product')">Batal</button>
+      <button class="btn btn-primary" onclick="saveProduct()">SIMPAN PRODUK</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Import CSV -->
+<div class="modal-overlay" id="modal-csv">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Import Katalog dari CSV</span>
+      <button class="modal-close" onclick="closeModal('modal-csv')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="csv-drop" id="csv-drop" onclick="document.getElementById('csv-file').click()" ondragover="e=>e.preventDefault()" ondrop="handleDrop(event)">
+        <p>Klik atau drag & drop file CSV di sini</p>
+        <small>Format: nama_produk, brand, harga_jual, tipe_komisi (pct/flat), nilai_komisi, unit, catatan</small>
+      </div>
+      <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCsvFile(this)">
+      <div id="csv-preview" style="margin-top:12px;display:none">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-family:'Space Mono',monospace">PREVIEW DATA</div>
+        <div class="tbl-wrap" style="max-height:220px;overflow-y:auto">
+          <table><thead><tr id="csv-thead"></tr></thead><tbody id="csv-tbody"></tbody></table>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px" id="csv-count"></div>
+      </div>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:6px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Contoh format CSV:</div>
+        <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);line-height:1.8">
+          nama_produk,brand,harga_jual,tipe_komisi,nilai_komisi,unit<br>
+          Blue 6 Bulan,FTL Gym,3450000,flat,150000,6 bulan<br>
+          Ultra 12 Bulan,FTL Gym,6870000,pct,5,12 bulan
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-csv')">Batal</button>
+      <button class="btn btn-primary" id="csv-import-btn" onclick="importCsv()" style="display:none">IMPORT DATA</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Catat Penjualan -->
+<div class="modal-overlay" id="modal-sale">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Catat Penjualan Baru</span>
+      <button class="modal-close" onclick="closeModal('modal-sale')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Produk</label>
+        <select id="s-product" onchange="updateSaleCalc()"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nama Pembeli</label>
+          <input type="text" id="s-buyer" placeholder="Nama customer">
+        </div>
+        <div class="form-group">
+          <label>Jumlah (qty)</label>
+          <input type="number" id="s-qty" value="1" min="1" oninput="updateSaleCalc()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tanggal Penjualan</label>
+          <input type="date" id="s-date">
+        </div>
+        <div class="form-group">
+          <label>Metode Tracking</label>
+          <select id="s-tracking">
+            <option>Unique Link</option>
+            <option>Kode Referral</option>
+            <option>API/Webhook</option>
+            <option>Platform (Involve Asia, dll)</option>
+            <option>Manual / Konfirmasi Brand</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catatan</label>
+        <input type="text" id="s-note" placeholder="Nomor order, bukti transfer, dll">
+      </div>
+      <div class="claim-summary" id="sale-calc">
+        <div class="cs-row"><span class="cs-label">Harga jual</span><span class="cs-val" id="sc-price">Rp0</span></div>
+        <div class="cs-row"><span class="cs-label">Qty</span><span class="cs-val" id="sc-qty">1</span></div>
+        <div class="cs-row total"><span class="cs-label">Komisi kamu</span><span class="cs-val green" id="sc-comm">Rp0</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sale')">Batal</button>
+      <button class="btn btn-primary" onclick="saveSale()">CATAT PENJUALAN</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Buat Klaim -->
+<div class="modal-overlay" id="modal-claim">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Buat Pengajuan Klaim Komisi</span>
+      <button class="modal-close" onclick="closeModal('modal-claim')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Filter Brand</label>
+          <select id="claim-brand-filter" onchange="renderClaimItems()">
+            <option value="">Semua Brand</option>
+            <option>FTL Gym</option>
+            <option>Properti Idaman</option>
+            <option>Glow Lab</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Periode</label>
+          <select id="claim-period">
+            <option>April 2026</option>
+            <option>Maret 2026</option>
+            <option>Februari 2026</option>
+            <option>Custom</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Pilih Penjualan yang Diklaim</label>
+        <div id="claim-items" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px 12px"></div>
+      </div>
+      <div class="claim-summary" id="claim-total-box">
+        <div class="cs-row"><span class="cs-label">Items dipilih</span><span class="cs-val" id="ct-items">0</span></div>
+        <div class="cs-row"><span class="cs-label">Total nilai penjualan</span><span class="cs-val" id="ct-sales">Rp0</span></div>
+        <div class="cs-row total"><span class="cs-label">Total komisi diklaim</span><span class="cs-val green" id="ct-comm">Rp0</span></div>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label>Kirim klaim ke email brand</label>
+        <input type="email" id="claim-email" placeholder="finance@brand.com">
+        <div class="form-note">Opsional — kamu juga bisa export PDF dan kirim manual</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-claim')">Batal</button>
+      <button class="btn btn-blue" onclick="exportClaimPdf()">↓ EXPORT PDF</button>
+      <button class="btn btn-primary" onclick="submitClaim()">AJUKAN KLAIM</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+// ── DATA STORE ──
+let products = JSON.parse(localStorage.getItem('affili_products')||'[]');
+let sales = JSON.parse(localStorage.getItem('affili_sales')||'[]');
+let claims = JSON.parse(localStorage.getItem('affili_claims')||'[]');
+let csvRows = [];
+
+if(!products.length) products = [
+  {id:'p1',name:'Blue Membership 6 Bulan',brand:'FTL Gym',price:3450000,commType:'flat',commVal:150000,unit:'6 bulan',note:'',sold:0},
+  {id:'p2',name:'Blue Membership 12 Bulan',brand:'FTL Gym',price:5588000,commType:'flat',commVal:250000,unit:'12 bulan',note:'',sold:0},
+  {id:'p3',name:'Ultra Membership 6 Bulan',brand:'FTL Gym',price:4235000,commType:'flat',commVal:200000,unit:'6 bulan',note:'',sold:0},
+  {id:'p4',name:'Pilates+ 12 Bulan',brand:'FTL Gym',price:13599000,commType:'pct',commVal:3,unit:'12 bulan',note:'',sold:0},
+  {id:'p5',name:'Studio 21m² Tower A',brand:'Properti Idaman',price:350000000,commType:'pct',commVal:2,unit:'unit',note:'',sold:0},
+  {id:'p6',name:'Glowing Set 3 Step',brand:'Glow Lab',price:399000,commType:'flat',commVal:40000,unit:'set',note:'',sold:0},
+];
+if(!sales.length) sales = [
+  {id:'s1',productId:'p1',productName:'Blue Membership 6 Bulan',brand:'FTL Gym',buyer:'Rustam',qty:1,price:3450000,comm:150000,date:'2026-04-01',tracking:'Unique Link',note:'',claimId:''},
+  {id:'s2',productId:'p2',productName:'Blue Membership 12 Bulan',brand:'FTL Gym',buyer:'Siti Rahma',qty:1,price:5588000,comm:250000,date:'2026-04-03',tracking:'Unique Link',note:'',claimId:''},
+  {id:'s3',productId:'p3',productName:'Ultra Membership 6 Bulan',brand:'FTL Gym',buyer:'Budi Santoso',qty:1,price:4235000,comm:200000,date:'2026-04-05',tracking:'WA Konfirmasi',note:'',claimId:''},
+  {id:'s4',productId:'p6',productName:'Glowing Set 3 Step',brand:'Glow Lab',buyer:'Dewi Lestari',qty:2,price:399000,comm:40000,date:'2026-04-06',tracking:'Unique Link',note:'',claimId:''},
+];
+
+function save(){
+  localStorage.setItem('affili_products',JSON.stringify(products));
+  localStorage.setItem('affili_sales',JSON.stringify(sales));
+  localStorage.setItem('affili_claims',JSON.stringify(claims));
+}
+
+// ── UTILS ──
+function fmt(n){ return 'Rp'+Math.round(n).toLocaleString('id'); }
+function uid(){ return '_'+Math.random().toString(36).substr(2,9); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function claimNo(){ return 'CLM-'+Date.now().toString().slice(-6); }
+function showToast(msg,dur=2200){
+  const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',dur);
+}
+function calcComm(p,qty=1){
+  qty=parseInt(qty)||1;
+  const base=p.commType==='pct'?(p.price*p.commVal/100):p.commVal;
+  return base*qty;
+}
+
+// ── NAVIGATION ──
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const tabs=['catalog','sales','claims'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+  if(id==='catalog') renderCatalog();
+  if(id==='sales') renderSales();
+  if(id==='claims') renderClaims();
+}
+
+// ── CATALOG ──
+function renderCatalog(){
+  const totalProducts=products.length;
+  const brands=[...new Set(products.map(p=>p.brand))].length;
+  const totalSalesVal=sales.reduce((s,sl)=>s+sl.price*sl.qty,0);
+  const totalComm=sales.reduce((s,sl)=>s+sl.comm*sl.qty,0);
+  document.getElementById('catalog-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">TOTAL PRODUK</div><div class="stat-val">${totalProducts}</div></div>
+    <div class="stat"><div class="stat-label">BRAND AKTIF</div><div class="stat-val">${brands}</div></div>
+    <div class="stat"><div class="stat-label">TOTAL NILAI JUAL</div><div class="stat-val" style="font-size:18px">${fmt(totalSalesVal)}</div></div>
+    <div class="stat"><div class="stat-label">TOTAL KOMISI</div><div class="stat-val" style="font-size:18px;color:var(--green)">${fmt(totalComm)}</div></div>`;
+  const tbody=document.getElementById('catalog-tbody');
+  tbody.innerHTML=products.map(p=>{
+    const soldCount=sales.filter(s=>s.productId===p.id).reduce((a,s)=>a+s.qty,0);
+    const commDisplay=p.commType==='pct'?p.commVal+'%':fmt(p.commVal);
+    const commRp=fmt(p.commType==='pct'?p.price*p.commVal/100:p.commVal);
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div class="td-muted">${p.unit||''} ${p.note?'· '+p.note:''}</div></td>
+      <td><span class="badge badge-gray">${p.brand}</span></td>
+      <td class="td-mono">${fmt(p.price)}</td>
+      <td class="td-mono">${commDisplay}</td>
+      <td class="td-mono" style="color:var(--green)">${commRp}</td>
+      <td class="td-mono">${soldCount}x</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">EDIT</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">DEL</button>
+      </div></td>
+    </tr>`;}).join('');
+}
+
+function openProductModal(id){
+  document.getElementById('p-edit-id').value='';
+  document.getElementById('p-name').value='';
+  document.getElementById('p-price').value='';
+  document.getElementById('p-comm-val').value='';
+  document.getElementById('p-note').value='';
+  document.getElementById('p-unit').value='';
+  document.getElementById('product-modal-title').textContent='Tambah Produk Baru';
+  document.getElementById('comm-preview').textContent='Masukkan harga & nilai komisi di atas';
+  document.getElementById('modal-product').classList.add('open');
+}
+
+function editProduct(id){
+  const p=products.find(x=>x.id===id);if(!p)return;
+  document.getElementById('p-edit-id').value=id;
+  document.getElementById('p-name').value=p.name;
+  document.getElementById('p-brand').value=p.brand;
+  document.getElementById('p-price').value=p.price;
+  document.getElementById('p-comm-type').value=p.commType;
+  document.getElementById('p-comm-val').value=p.commVal;
+  document.getElementById('p-unit').value=p.unit||'';
+  document.getElementById('p-note').value=p.note||'';
+  document.getElementById('product-modal-title').textContent='Edit Produk';
+  updateCommPreview();
+  document.getElementById('modal-product').classList.add('open');
+}
+
+function updateCommPreview(){
+  const price=parseFloat(document.getElementById('p-price').value)||0;
+  const type=document.getElementById('p-comm-type').value;
+  const val=parseFloat(document.getElementById('p-comm-val').value)||0;
+  const comm=type==='pct'?(price*val/100):val;
+  document.getElementById('comm-preview').textContent=comm>0?fmt(comm)+' per item':'Masukkan harga & nilai komisi di atas';
+}
+
+function saveProduct(){
+  const editId=document.getElementById('p-edit-id').value;
+  const name=document.getElementById('p-name').value.trim();
+  const price=parseFloat(document.getElementById('p-price').value)||0;
+  const commVal=parseFloat(document.getElementById('p-comm-val').value)||0;
+  if(!name||!price||!commVal){showToast('Lengkapi semua field wajib!');return;}
+  const prod={
+    id:editId||uid(),
+    name,
+    brand:document.getElementById('p-brand').value,
+    price,
+    commType:document.getElementById('p-comm-type').value,
+    commVal,
+    unit:document.getElementById('p-unit').value,
+    note:document.getElementById('p-note').value,
+  };
+  if(editId){const i=products.findIndex(p=>p.id===editId);if(i>-1)products[i]=prod;}
+  else products.push(prod);
+  save();renderCatalog();closeModal('modal-product');showToast('Produk disimpan!');
+}
+
+function deleteProduct(id){
+  if(!confirm('Hapus produk ini?'))return;
+  products=products.filter(p=>p.id!==id);save();renderCatalog();showToast('Produk dihapus.');
+}
+
+function exportCatalogCsv(){
+  const rows=[['nama_produk','brand','harga_jual','tipe_komisi','nilai_komisi','unit','catatan']];
+  products.forEach(p=>rows.push([p.name,p.brand,p.price,p.commType,p.commVal,p.unit||'',p.note||'']));
+  downloadCsv(rows,'katalog_affili.csv');
+}
+
+function downloadCsv(rows,filename){
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=filename;a.click();
+}
+
+// ── CSV IMPORT ──
+function openCsvModal(){ csvRows=[];document.getElementById('csv-preview').style.display='none';document.getElementById('csv-import-btn').style.display='none';document.getElementById('modal-csv').classList.add('open'); }
+function handleDrop(e){ e.preventDefault();const f=e.dataTransfer.files[0];if(f)parseCsvFile(f); }
+function handleCsvFile(input){ if(input.files[0])parseCsvFile(input.files[0]); }
+
+function parseCsvFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    const headers=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+    csvRows=lines.slice(1).map(line=>{
+      const vals=line.split(',').map(v=>v.replace(/"/g,'').trim());
+      const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;
+    }).filter(r=>r.nama_produk||r[headers[0]]);
+    const thead=document.getElementById('csv-thead');
+    const tbody=document.getElementById('csv-tbody');
+    thead.innerHTML=headers.map(h=>`<th>${h}</th>`).join('');
+    tbody.innerHTML=csvRows.slice(0,5).map(r=>`<tr>${headers.map(h=>`<td class="td-muted">${r[h]||''}</td>`).join('')}</tr>`).join('');
+    document.getElementById('csv-count').textContent=csvRows.length+' baris data ditemukan'+(csvRows.length>5?' (menampilkan 5 pertama)':'');
+    document.getElementById('csv-preview').style.display='block';
+    document.getElementById('csv-import-btn').style.display='inline-flex';
+  };reader.readAsText(file);
+}
+
+function importCsv(){
+  if(!csvRows.length){showToast('Tidak ada data untuk diimport.');return;}
+  let count=0;
+  csvRows.forEach(r=>{
+    const name=(r.nama_produk||r[Object.keys(r)[0]]||'').trim();
+    if(!name)return;
+    products.push({
+      id:uid(),name,
+      brand:r.brand||'Unknown',
+      price:parseFloat(r.harga_jual)||0,
+      commType:r.tipe_komisi==='pct'?'pct':'flat',
+      commVal:parseFloat(r.nilai_komisi)||0,
+      unit:r.unit||'',note:r.catatan||'',
+    });count++;
+  });
+  save();renderCatalog();closeModal('modal-csv');showToast(count+' produk berhasil diimport!');
+}
+
+// ── SALES ──
+function renderSales(){
+  const unclaimed=sales.filter(s=>!s.claimId);
+  const totalComm=sales.reduce((a,s)=>a+s.comm*s.qty,0);
+  const claimedComm=sales.filter(s=>s.claimId).reduce((a,s)=>a+s.comm*s.qty,0);
+  const pendingComm=unclaimed.reduce((a,s)=>a+s.comm*s.qty,0);
+  document.getElementById('sales-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">TOTAL PENJUALAN</div><div class="stat-val">${sales.length}</div></div>
+    <div class="stat"><div class="stat-label">BELUM DIKLAIM</div><div class="stat-val" style="color:var(--amber)">${unclaimed.length}</div></div>
+    <div class="stat"><div class="stat-label">KOMISI TERTUNDA</div><div class="stat-val" style="font-size:18px;color:var(--amber)">${fmt(pendingComm)}</div></div>
+    <div class="stat"><div class="stat-label">KOMISI DIKLAIM</div><div class="stat-val" style="font-size:18px;color:var(--green)">${fmt(claimedComm)}</div></div>`;
+  const tbody=document.getElementById('sales-tbody');
+  tbody.innerHTML=[...sales].reverse().map(s=>{
+    const clm=s.claimId?claims.find(c=>c.id===s.claimId):null;
+    const badge=s.claimId?`<span class="badge badge-green">DIKLAIM</span>`:`<span class="badge badge-amber">PENDING</span>`;
+    return`<tr>
+      <td class="td-muted">${s.date}</td>
+      <td><div style="font-weight:500;font-size:13px">${s.productName}</div></td>
+      <td><span class="badge badge-gray">${s.brand}</span></td>
+      <td>${s.buyer||'-'}</td>
+      <td class="td-mono">${s.qty}</td>
+      <td class="td-mono">${fmt(s.price*s.qty)}</td>
+      <td class="td-mono" style="color:var(--green)">${fmt(s.comm*s.qty)}</td>
+      <td>${badge}${clm?'<div class="td-muted" style="margin-top:2px">'+clm.no+'</div>':''}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteSale('${s.id}')">DEL</button></td>
+    </tr>`;}).join('');
+}
+
+function openSaleModal(){
+  const sel=document.getElementById('s-product');
+  sel.innerHTML=products.map(p=>`<option value="${p.id}">${p.brand} — ${p.name} (${fmt(p.price)})</option>`).join('');
+  document.getElementById('s-date').value=today();
+  document.getElementById('s-buyer').value='';
+  document.getElementById('s-qty').value='1';
+  document.getElementById('s-note').value='';
+  updateSaleCalc();
+  document.getElementById('modal-sale').classList.add('open');
+}
+
+function updateSaleCalc(){
+  const pid=document.getElementById('s-product').value;
+  const p=products.find(x=>x.id===pid);
+  const qty=parseInt(document.getElementById('s-qty').value)||1;
+  if(!p)return;
+  document.getElementById('sc-price').textContent=fmt(p.price);
+  document.getElementById('sc-qty').textContent=qty;
+  document.getElementById('sc-comm').textContent=fmt(calcComm(p,qty));
+}
+
+function saveSale(){
+  const pid=document.getElementById('s-product').value;
+  const p=products.find(x=>x.id===pid);
+  const buyer=document.getElementById('s-buyer').value.trim();
+  const qty=parseInt(document.getElementById('s-qty').value)||1;
+  if(!p||!buyer){showToast('Pilih produk dan isi nama pembeli!');return;}
+  sales.push({
+    id:uid(),productId:pid,productName:p.name,brand:p.brand,
+    buyer,qty,price:p.price,comm:calcComm(p,1),
+    date:document.getElementById('s-date').value,
+    tracking:document.getElementById('s-tracking').value,
+    note:document.getElementById('s-note').value,claimId:'',
+  });
+  save();renderSales();closeModal('modal-sale');showToast('Penjualan dicatat!');
+}
+
+function deleteSale(id){
+  if(!confirm('Hapus catatan penjualan ini?'))return;
+  sales=sales.filter(s=>s.id!==id);save();renderSales();showToast('Penjualan dihapus.');
+}
+
+// ── CLAIMS ──
+function renderClaims(){
+  const totalClaims=claims.length;
+  const totalComm=claims.reduce((a,c)=>a+c.totalComm,0);
+  const paid=claims.filter(c=>c.status==='DIBAYAR').reduce((a,c)=>a+c.totalComm,0);
+  const pending=claims.filter(c=>c.status!=='DIBAYAR').reduce((a,c)=>a+c.totalComm,0);
+  document.getElementById('claims-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">TOTAL KLAIM</div><div class="stat-val">${totalClaims}</div></div>
+    <div class="stat"><div class="stat-label">TOTAL DIKLAIM</div><div class="stat-val" style="font-size:18px">${fmt(totalComm)}</div></div>
+    <div class="stat"><div class="stat-label">SUDAH DIBAYAR</div><div class="stat-val" style="font-size:18px;color:var(--green)">${fmt(paid)}</div></div>
+    <div class="stat"><div class="stat-label">MENUNGGU BAYAR</div><div class="stat-val" style="font-size:18px;color:var(--amber)">${fmt(pending)}</div></div>`;
+  const tbody=document.getElementById('claims-tbody');
+  tbody.innerHTML=[...claims].reverse().map(c=>{
+    const statusBadge={
+      'DIAJUKAN':'<span class="badge badge-blue">DIAJUKAN</span>',
+      'DIPROSES':'<span class="badge badge-amber">DIPROSES</span>',
+      'DIBAYAR':'<span class="badge badge-green">DIBAYAR</span>',
+      'DITOLAK':'<span class="badge badge-red">DITOLAK</span>',
+    }[c.status]||`<span class="badge badge-gray">${c.status}</span>`;
+    return`<tr>
+      <td class="td-mono">${c.no}</td>
+      <td class="td-muted">${c.date}</td>
+      <td><span class="badge badge-gray">${c.brand}</span></td>
+      <td class="td-muted">${c.items} item</td>
+      <td class="td-mono" style="color:var(--green)">${fmt(c.totalComm)}</td>
+      <td>${statusBadge}</td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="exportSingleClaimPdf('${c.id}')">PDF</button>
+        ${c.status==='DIAJUKAN'?`<button class="btn btn-green btn-sm" onclick="markPaid('${c.id}')">DIBAYAR</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="deleteClaim('${c.id}')">DEL</button>
+      </div></td>
+    </tr>`;}).join('');
+}
+
+function renderClaimItems(){
+  const brand=document.getElementById('claim-brand-filter').value;
+  const unclaimed=sales.filter(s=>!s.claimId&&(brand===''||s.brand===brand));
+  const container=document.getElementById('claim-items');
+  if(!unclaimed.length){container.innerHTML='<div style="font-size:13px;color:var(--text3);padding:10px 0">Tidak ada penjualan yang belum diklaim'+(brand?' untuk brand ini':'')+'.</div>';updateClaimTotal();return;}
+  container.innerHTML=unclaimed.map(s=>`
+    <div class="claim-item">
+      <input type="checkbox" class="claim-cb" id="cb-${s.id}" onchange="updateClaimTotal()" checked>
+      <div style="flex:1">
+        <div class="claim-name">${s.productName}</div>
+        <div style="font-size:11px;color:var(--text2)">${s.date} · ${s.buyer||'-'} · ${s.tracking}</div>
+      </div>
+      <span class="claim-price">${fmt(s.price)} ×${s.qty}</span>
+      <span class="claim-comm">${fmt(s.comm*s.qty)}</span>
+    </div>`).join('');
+  updateClaimTotal();
+}
+
+function updateClaimTotal(){
+  const brand=document.getElementById('claim-brand-filter').value;
+  const unclaimed=sales.filter(s=>!s.claimId&&(brand===''||s.brand===brand));
+  let items=0,totalSales=0,totalComm=0;
+  unclaimed.forEach(s=>{
+    const cb=document.getElementById('cb-'+s.id);
+    if(cb&&cb.checked){items++;totalSales+=s.price*s.qty;totalComm+=s.comm*s.qty;}
+  });
+  document.getElementById('ct-items').textContent=items;
+  document.getElementById('ct-sales').textContent=fmt(totalSales);
+  document.getElementById('ct-comm').textContent=fmt(totalComm);
+}
+
+function openClaimModal(){
+  const unclaimed=sales.filter(s=>!s.claimId);
+  if(!unclaimed.length){showToast('Tidak ada penjualan yang belum diklaim.');return;}
+  document.getElementById('claim-brand-filter').value='';
+  renderClaimItems();
+  document.getElementById('modal-claim').classList.add('open');
+}
+
+function getSelectedSales(){
+  const brand=document.getElementById('claim-brand-filter').value;
+  return sales.filter(s=>!s.claimId&&(brand===''||s.brand===brand)&&document.getElementById('cb-'+s.id)?.checked);
+}
+
+function submitClaim(){
+  const selected=getSelectedSales();
+  if(!selected.length){showToast('Pilih minimal 1 penjualan!');return;}
+  const brand=[...new Set(selected.map(s=>s.brand))].join(', ');
+  const totalComm=selected.reduce((a,s)=>a+s.comm*s.qty,0);
+  const totalSales=selected.reduce((a,s)=>a+s.price*s.qty,0);
+  const claim={
+    id:uid(),no:claimNo(),date:today(),brand,
+    items:selected.length,totalSales,totalComm,
+    status:'DIAJUKAN',email:document.getElementById('claim-email').value,
+    saleIds:selected.map(s=>s.id),
+  };
+  claims.push(claim);
+  selected.forEach(s=>{ const i=sales.findIndex(x=>x.id===s.id);if(i>-1)sales[i].claimId=claim.id; });
+  save();renderClaims();closeModal('modal-claim');showToast('Klaim '+claim.no+' berhasil diajukan!');
+}
+
+function markPaid(id){
+  const i=claims.findIndex(c=>c.id===id);if(i>-1)claims[i].status='DIBAYAR';save();renderClaims();showToast('Status diupdate: DIBAYAR');
+}
+function deleteClaim(id){
+  if(!confirm('Hapus klaim ini? Status penjualan akan dikembalikan ke pending.'))return;
+  const c=claims.find(x=>x.id===id);
+  if(c) c.saleIds.forEach(sid=>{ const i=sales.findIndex(s=>s.id===sid);if(i>-1)sales[i].claimId=''; });
+  claims=claims.filter(c=>c.id!==id);save();renderClaims();showToast('Klaim dihapus.');
+}
+
+// ── PDF EXPORT ──
+function buildClaimPdf(claim){
+  const doc=new jsPDF();
+  const claimSales=sales.filter(s=>claim.saleIds.includes(s.id));
+  const pageW=doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(8,8,8);doc.rect(0,0,pageW,40,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(18);
+  doc.text('AFFILI',14,18);doc.setFont('helvetica','normal');doc.setFontSize(10);
+  doc.text('Commission Claim Invoice',14,27);
+  doc.setFontSize(9);doc.setTextColor(160,160,160);
+  doc.text('Powered by Affili AI Platform',14,34);
+
+  doc.setTextColor(0,0,0);doc.setFont('helvetica','bold');doc.setFontSize(13);
+  doc.text('PENGAJUAN KLAIM KOMISI',14,55);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100,100,100);
+  doc.text('No. Klaim: '+claim.no,14,63);
+  doc.text('Tanggal: '+claim.date,14,69);
+  doc.text('Brand: '+claim.brand,14,75);
+  doc.text('Status: '+claim.status,14,81);
+  if(claim.email) doc.text('Ditujukan ke: '+claim.email,14,87);
+
+  doc.setDrawColor(230,230,230);doc.line(14,94,pageW-14,94);
+
+  doc.autoTable({
+    startY:100,
+    head:[['#','Produk','Pembeli','Tgl','Qty','Harga Jual','Komisi']],
+    body:claimSales.map((s,i)=>[
+      i+1,s.productName,s.buyer||'-',s.date,s.qty,
+      'Rp'+Math.round(s.price*s.qty).toLocaleString('id'),
+      'Rp'+Math.round(s.comm*s.qty).toLocaleString('id'),
+    ]),
+    styles:{font:'helvetica',fontSize:9,cellPadding:5},
+    headStyles:{fillColor:[20,20,20],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[248,248,248]},
+    columnStyles:{0:{cellWidth:8},5:{halign:'right'},6:{halign:'right',textColor:[22,101,52]}},
+  });
+
+  const finalY=doc.lastAutoTable.finalY+10;
+  doc.setDrawColor(200,200,200);doc.line(pageW-80,finalY,pageW-14,finalY);
+  doc.setFontSize(9);doc.setTextColor(100,100,100);
+  doc.text('Total Nilai Penjualan',pageW-80,finalY+7);
+  doc.setTextColor(0,0,0);doc.setFont('helvetica','bold');
+  doc.text('Rp'+Math.round(claim.totalSales).toLocaleString('id'),pageW-14,finalY+7,{align:'right'});
+  doc.setFontSize(11);doc.setTextColor(22,101,52);
+  doc.text('TOTAL KOMISI DIKLAIM',pageW-80,finalY+16);
+  doc.text('Rp'+Math.round(claim.totalComm).toLocaleString('id'),pageW-14,finalY+16,{align:'right'});
+
+  const noteY=finalY+30;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150,150,150);
+  doc.text('Dokumen ini dibuat otomatis oleh Affili AI Platform. Mohon transfer komisi ke rekening yang telah disepakati.',14,noteY);
+  doc.text('Terima kasih atas kerjasamanya.',14,noteY+5);
+
+  return doc;
+}
+
+function exportClaimPdf(){
+  const selected=getSelectedSales();
+  if(!selected.length){showToast('Pilih minimal 1 penjualan!');return;}
+  const brand=[...new Set(selected.map(s=>s.brand))].join(', ');
+  const tempClaim={
+    id:'preview',no:'CLM-PREVIEW',date:today(),brand,
+    items:selected.length,
+    totalSales:selected.reduce((a,s)=>a+s.price*s.qty,0),
+    totalComm:selected.reduce((a,s)=>a+s.comm*s.qty,0),
+    status:'DRAFT',email:document.getElementById('claim-email').value||'-',
+    saleIds:selected.map(s=>s.id),
+  };
+  const doc=buildClaimPdf(tempClaim);
+  doc.save('klaim-komisi-preview.pdf');
+  showToast('PDF berhasil diexport!');
+}
+
+function exportSingleClaimPdf(id){
+  const claim=claims.find(c=>c.id===id);if(!claim)return;
+  const doc=buildClaimPdf(claim);
+  doc.save('klaim-'+claim.no+'.pdf');
+  showToast('PDF klaim '+claim.no+' diexport!');
+}
+
+// ── MODAL UTILS ──
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ── INIT ──
+renderCatalog();
+</script>
+</body>
+</html>

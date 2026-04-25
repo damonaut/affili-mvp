@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affili — Content Creator Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--bg2:#0f0f0f;--bg3:#161616;--bg4:#1e1e1e;--border:#222;--border2:#2e2e2e;--text:#f0f0f0;--text2:#888;--text3:#444;--accent:#fff;--green:#4ade80;--red:#f87171;--amber:#fbbf24;--blue:#60a5fa;--purple:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100}
+.logo{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.08em}
+.logo span{color:var(--text3)}
+.nav-back{font-size:12px;color:var(--text2);font-family:'Space Mono',monospace;cursor:pointer;transition:color .12s}
+.nav-back:hover{color:var(--text)}
+#main{max-width:900px;margin:0 auto;padding:24px;display:grid;grid-template-columns:300px 1fr;gap:20px}
+@media(max-width:700px){#main{grid-template-columns:1fr;padding:16px}}
+
+/* LEFT PANEL — Signal Monitor */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:12px;font-weight:600;font-family:'Space Mono',monospace;letter-spacing:.04em;color:var(--text2);text-transform:uppercase}
+.panel-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+
+.signal-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.signal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.signal-name{font-size:12px;font-weight:600;color:var(--text)}
+.signal-val{font-size:18px;font-weight:700;font-family:'Space Mono',monospace}
+.signal-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin:6px 0}
+.signal-fill{height:100%;border-radius:2px;transition:width .5s}
+.signal-desc{font-size:10px;color:var(--text3);line-height:1.4}
+.signal-trigger{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:600;margin-top:4px;display:inline-block}
+
+.algo-box{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 13px}
+.algo-title{font-size:11px;font-weight:600;color:var(--text2);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.algo-rule{display:flex;align-items:flex-start;gap:6px;font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.4}
+.algo-rule:last-child{border-bottom:none}
+.algo-rule .cond{color:var(--amber);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;margin-top:1px}
+.algo-rule .action{color:var(--text)}
+
+.btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:.04em;transition:all .12s;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#000;width:100%}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);width:100%}
+.btn-ghost:hover{color:var(--text);border-color:var(--text3)}
+.btn-copy{background:transparent;color:var(--text3);border:1px solid var(--border);font-size:11px;padding:4px 10px}
+.btn-copy:hover{color:var(--text);border-color:var(--text3)}
+.btn-send{background:#25d366;color:#fff;font-size:11px;padding:4px 10px}
+.btn-ig{background:#e1306c;color:#fff;font-size:11px;padding:4px 10px}
+
+/* RIGHT PANEL — Content Output */
+.content-area{display:flex;flex-direction:column;gap:14px}
+.content-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.content-title{font-size:18px;font-weight:500}
+.status-pill{font-size:11px;padding:4px 12px;border-radius:999px;font-family:'Space Mono',monospace;font-weight:600}
+
+.content-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cc-header{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cc-type{display:flex;align-items:center;gap:7px}
+.cc-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.cc-name{font-size:12px;font-weight:600;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:.03em;text-transform:uppercase}
+.cc-actions{display:flex;gap:6px;flex-wrap:wrap}
+.cc-body{padding:16px}
+.cc-content{font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.cc-visual{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px}
+.cv-label{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.cv-content{font-size:12px;color:var(--text2);line-height:1.6}
+.cc-meta{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap}
+.meta-item{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace}
+.meta-item span{color:var(--text2)}
+
+.loading-state{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+.loading-dots::after{content:'...';animation:dots 1.5s infinite}
+@keyframes dots{0%,100%{content:'...'}33%{content:'.'}66%{content:'...'}}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text3)}
+.empty-icon{font-size:32px;margin-bottom:12px;opacity:.3}
+.empty-title{font-size:14px;color:var(--text2);margin-bottom:6px}
+.empty-desc{font-size:12px;color:var(--text3);line-height:1.6}
+
+.history-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s}
+.history-item:hover{border-color:var(--border2)}
+.hi-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.hi-type{font-size:10px;padding:1px 7px;border-radius:999px;font-family:'Space Mono',monospace;font-weight:600}
+.hi-date{font-size:10px;color:var(--text3);margin-left:auto;font-family:'Space Mono',monospace}
+.hi-preview{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hi-trigger{font-size:10px;color:var(--text3);margin-top:3px}
+
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:13px;padding:10px 18px;border-radius:8px;display:none;z-index:300}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">AFFILI<span>.</span>CONTENT</div>
+  <div class="nav-back" onclick="history.back()">← BACK TO ADMIN</div>
+</nav>
+
+<div id="main">
+
+<!-- LEFT: Signal Monitor + Algorithm -->
+<div style="display:flex;flex-direction:column;gap:12px">
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Signal Monitor</span>
+      <span id="algo-status" class="status-pill" style="background:#14532d;color:var(--green)">WATCHING</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="signal-card">
+        <div class="signal-top">
+          <span class="signal-name">Traffic ke Chatbot</span>
+          <span class="signal-val" id="sig-traffic" style="color:var(--amber)">LOW</span>
+        </div>
+        <div class="signal-bar"><div class="signal-fill" id="bar-traffic" style="width:15%;background:var(--amber)"></div></div>
+        <div class="signal-desc">Percakapan baru <span id="traffic-count">3</span> dalam 7 hari terakhir</div>
+        <span class="signal-trigger" style="background:#78350f;color:var(--amber)">⚡ TRIGGER: butuh boost</span>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-top">
+          <span class="signal-name">Closing Rate</span>
+          <span class="signal-val" id="sig-closing" style="color:var(--green)">OK</span>
+        </div>
+        <div class="signal-bar"><div class="signal-fill" id="bar-closing" style="width:22%;background:var(--green)"></div></div>
+        <div class="signal-desc">22% dari percakapan → closing (benchmark: 15%)</div>
+        <span class="signal-trigger" style="background:#14532d;color:var(--green)">✓ Di atas benchmark</span>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-top">
+          <span class="signal-name">Konten Terakhir</span>
+          <span class="signal-val" id="sig-content" style="color:var(--red)">5 HARI</span>
+        </div>
+        <div class="signal-bar"><div class="signal-fill" id="bar-content" style="width:80%;background:var(--red)"></div></div>
+        <div class="signal-desc">Tidak ada konten baru sejak <span id="last-content">5 hari lalu</span></div>
+        <span class="signal-trigger" style="background:#7f1d1d;color:var(--red)">⚡ TRIGGER: konten stale</span>
+      </div>
+
+      <div class="signal-card">
+        <div class="signal-top">
+          <span class="signal-name">Hot Leads Minggu Ini</span>
+          <span class="signal-val" id="sig-leads" style="color:var(--blue)">2</span>
+        </div>
+        <div class="signal-bar"><div class="signal-fill" id="bar-leads" style="width:40%;background:var(--blue)"></div></div>
+        <div class="signal-desc">2 Hot leads, 7 Warm leads aktif</div>
+        <span class="signal-trigger" style="background:#1e3a5f;color:var(--blue)">◈ Normal</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Content Algorithm</span>
+    </div>
+    <div class="panel-body">
+      <div class="algo-box">
+        <div class="algo-title">Trigger Rules</div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">traffic &lt; 5 conv/7 hari → generate WA Broadcast + IG boost</span>
+        </div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">konten terakhir &gt; 3 hari → generate konten baru semua platform</span>
+        </div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">closing rate &lt; 10% (7 hari) → generate educational content + social proof</span>
+        </div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">ada promo FTL baru → generate promo blast WA + IG story urgent</span>
+        </div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">hot leads &gt; 5/minggu → generate "momentum" content untuk capitalize</span>
+        </div>
+        <div class="algo-rule">
+          <span class="cond">IF</span>
+          <span class="action">semua metrics OK → weekly content saja (Senin pagi)</span>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--amber);border-radius:8px;padding:10px 12px">
+        <div style="font-size:11px;color:var(--amber);font-weight:600;font-family:'Space Mono',monospace;margin-bottom:4px">⚡ ACTIVE TRIGGERS (2)</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">· Traffic rendah (3 conv/7 hari)<br>· Konten stale (5 hari tanpa post)</div>
+      </div>
+
+      <button class="btn btn-primary" id="generate-btn" onclick="generateContent()">
+        <span id="btn-text">GENERATE KONTEN SEKARANG</span>
+      </button>
+      <button class="btn btn-ghost" onclick="generateContent('manual')">
+        MANUAL TRIGGER (OVERRIDE)
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT: Content Output -->
+<div class="content-area">
+
+  <div class="content-header">
+    <div class="content-title">Generated Content</div>
+    <span id="gen-status" class="status-pill" style="background:var(--bg3);color:var(--text3)">IDLE</span>
+  </div>
+
+  <div id="content-output">
+    <div class="empty-state">
+      <div class="empty-icon">◈</div>
+      <div class="empty-title">Belum ada konten yang digenerate</div>
+      <div class="empty-desc">Algorithm mendeteksi 2 trigger aktif.<br>Klik "Generate Konten Sekarang" untuk mulai.</div>
+    </div>
+  </div>
+
+  <div id="history-section" style="display:none">
+    <div style="font-size:11px;font-weight:600;color:var(--text3);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Riwayat Konten</div>
+    <div id="history-list" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const WA_NUM = "628994264262";
+const AFFILIATE_LINK = "https://selfregist.ftlgym.com/promo/adam";
+
+const TRIGGERS = {
+  lowTraffic: true,
+  staleContent: true,
+  lowClosing: false,
+  newPromo: false,
+  highMomentum: false,
+};
+
+let history = JSON.parse(localStorage.getItem('affili_content_history') || '[]');
+let isGenerating = false;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2200);
+}
+
+function setStatus(text, bg, color) {
+  const el = document.getElementById('gen-status');
+  el.textContent = text;
+  el.style.background = bg;
+  el.style.color = color;
+}
+
+function determineTriggerContext() {
+  const triggers = [];
+  const angles = [];
+
+  if (TRIGGERS.lowTraffic) {
+    triggers.push('traffic rendah (3 percakapan dalam 7 hari)');
+    angles.push('awareness', 'curiosity', 'FOMO');
+  }
+  if (TRIGGERS.staleContent) {
+    triggers.push('tidak ada konten baru selama 5 hari');
+    angles.push('reminder', 'social proof', 'value proposition');
+  }
+  if (TRIGGERS.lowClosing) {
+    triggers.push('closing rate di bawah benchmark');
+    angles.push('education', 'objection handling', 'testimonial');
+  }
+  if (TRIGGERS.newPromo) {
+    triggers.push('ada promo FTL baru');
+    angles.push('urgency', 'promo announcement', 'limited time');
+  }
+  if (TRIGGERS.highMomentum) {
+    triggers.push('momentum tinggi (banyak Hot Leads)');
+    angles.push('social proof', 'momentum', 'FOMO');
+  }
+
+  return { triggers, angles };
+}
+
+async function generateContent(mode) {
+  if (isGenerating) return;
+  isGenerating = true;
+
+  const btn = document.getElementById('generate-btn');
+  const btnText = document.getElementById('btn-text');
+  btn.disabled = true;
+  btnText.textContent = 'GENERATING...';
+  setStatus('GENERATING', '#78350f', '#fbbf24');
+
+  document.getElementById('content-output').innerHTML = `
+    <div class="loading-state">
+      <div class="loading-dots">Menganalisis signals dan generate konten</div>
+    </div>`;
+
+  const { triggers, angles } = determineTriggerContext();
+  const isManual = mode === 'manual';
+
+  const systemPrompt = `Kamu adalah Content Creator Agent untuk Adam, seorang affiliator FTL Gym Indonesia.
+
+Adam adalah affiliator FTL Gym yang aktif. Link afiliasi: ${AFFILIATE_LINK}
+Nomor WA Adam: ${WA_NUM}
+
+Tugasmu: generate konten marketing yang authentic, tidak terasa seperti iklan, dan mendorong orang untuk chat dengan Adam tentang FTL Gym.
+
+Konteks kondisi saat ini:
+${isManual ? '- Mode: Manual trigger oleh Adam' : `- Trigger aktif: ${triggers.join(', ')}`}
+- Angle yang direkomendasikan: ${angles.join(', ')}
+- Waktu: ${new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
+
+Yang harus kamu generate — dalam format JSON dengan struktur ini:
+{
+  "analysis": "2-3 kalimat analisis kenapa konten ini dibuat sekarang",
+  "wa_broadcast": {
+    "message": "pesan WA broadcast yang personal, casual, TIDAK terasa seperti blast iklan. Max 150 kata. Boleh pakai emoji secukupnya. Harus ada CTA natural ke link atau chat Adam.",
+    "target": "siapa target penerima pesan ini (misal: kontak lama yang belum pernah tanya gym, teman yang pernah nanya soal fitness, dll)",
+    "timing": "kapan waktu terbaik kirim pesan ini dan kenapa"
+  },
+  "ig_caption": {
+    "caption": "caption Instagram yang engaging. Hook kuat di 2 baris pertama (karena IG truncate). Boleh storytelling, boleh educational. Max 200 kata. Sisipkan CTA ke link di bio atau DM Adam.",
+    "hashtags": ["5-8 hashtag relevan, mix antara besar dan niche"],
+    "visual_direction": "deskripsi visual yang harus dipakai untuk postingan ini — foto/video seperti apa, mood, angle, warna dominan. Bisa pakai foto sendiri atau konten UGC.",
+    "story_idea": "ide untuk IG Story sebagai pelengkap postingan ini"
+  },
+  "tiktok_hook": {
+    "hook": "3 detik pertama video TikTok — kalimat/visual yang bikin orang tidak scroll. Max 2 kalimat.",
+    "script_outline": "outline script TikTok 30-60 detik: opening hook → masalah → solusi → CTA",
+    "trend_note": "kalau ada format TikTok yang cocok untuk konten ini (misal: 'POV:', 'Things I wish I knew', dll)"
+  },
+  "broadcast_strategy": "strategi tambahan: siapa yang harus dapat pesan ini duluan, apakah perlu follow-up, dll"
+}
+
+PENTING:
+- Jangan pernah terdengar seperti sales pitch atau iklan
+- Tone harus seperti teman yang berbagi pengalaman atau tips
+- Nama FTL Gym boleh disebut tapi bukan fokus utama
+- Fokus pada manfaat dan lifestyle, bukan harga
+- Konten harus authentic dan bisa dipercaya
+- Bahasa Indonesia yang natural dan gaul tapi sopan`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: `Generate konten sekarang berdasarkan kondisi: ${isManual ? 'manual trigger oleh Adam' : triggers.join(', ')}. Return ONLY valid JSON, no markdown, no backticks.` }]
+      })
+    });
+
+    const data = await response.json();
+    const rawText = data.content?.[0]?.text || '';
+    const cleaned = rawText.replace(/```json|```/g, '').trim();
+    const content = JSON.parse(cleaned);
+
+    renderContent(content, triggers, isManual);
+    saveToHistory(content, triggers, isManual);
+    setStatus('GENERATED', '#14532d', '#4ade80');
+
+  } catch (err) {
+    document.getElementById('content-output').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-title" style="color:var(--red)">Gagal generate konten</div>
+        <div class="empty-desc">Pastikan koneksi internet aktif dan coba lagi.<br><small style="color:var(--text3)">${err.message}</small></div>
+      </div>`;
+    setStatus('ERROR', '#7f1d1d', '#f87171');
+  }
+
+  btn.disabled = false;
+  btnText.textContent = 'GENERATE ULANG';
+  isGenerating = false;
+}
+
+function renderContent(c, triggers, isManual) {
+  const waMsg = encodeURIComponent(`Halo Adam! Aku tertarik info soal gym FTL nih, bisa ceritain lebih?`);
+  const waLink = `https://wa.me/${WA_NUM}?text=${waMsg}`;
+
+  document.getElementById('content-output').innerHTML = `
+
+    ${c.analysis ? `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;margin-bottom:4px">
+      <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Analisis Algorithm</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">${c.analysis}</div>
+      ${!isManual ? `<div style="font-size:10px;color:var(--amber);margin-top:6px;font-family:'Space Mono',monospace">⚡ TRIGGERED BY: ${triggers.join(' + ')}</div>` : `<div style="font-size:10px;color:var(--purple);margin-top:6px;font-family:'Space Mono',monospace">◈ MANUAL OVERRIDE</div>`}
+    </div>` : ''}
+
+    <div class="content-card">
+      <div class="cc-header">
+        <div class="cc-type">
+          <div class="cc-icon" style="background:#25d366;color:#fff">WA</div>
+          <span class="cc-name">WA Broadcast</span>
+        </div>
+        <div class="cc-actions">
+          <button class="btn btn-copy" onclick="copyText('wa-text')">COPY</button>
+          <button class="btn btn-send" onclick="window.open('${waLink}','_blank')">OPEN WA</button>
+        </div>
+      </div>
+      <div class="cc-body">
+        <div class="cc-content" id="wa-text">${c.wa_broadcast?.message || ''}</div>
+        <div class="cc-visual">
+          <div class="cv-label">Target & Timing</div>
+          <div class="cv-content"><b style="color:var(--text)">Target:</b> ${c.wa_broadcast?.target || ''}<br><b style="color:var(--text)">Waktu terbaik:</b> ${c.wa_broadcast?.timing || ''}</div>
+        </div>
+      </div>
+      <div class="cc-meta">
+        <span class="meta-item">Platform: <span>WhatsApp</span></span>
+        <span class="meta-item">Type: <span>Broadcast</span></span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="cc-header">
+        <div class="cc-type">
+          <div class="cc-icon" style="background:#e1306c;color:#fff">IG</div>
+          <span class="cc-name">Instagram Caption</span>
+        </div>
+        <div class="cc-actions">
+          <button class="btn btn-copy" onclick="copyText('ig-text')">COPY</button>
+          <button class="btn btn-ig" onclick="copyText('ig-text');showToast('Caption & hashtag disalin! Buka Instagram dan paste.')">COPY + IG</button>
+        </div>
+      </div>
+      <div class="cc-body">
+        <div class="cc-content" id="ig-text">${c.ig_caption?.caption || ''}\n\n${(c.ig_caption?.hashtags || []).map(h => h.startsWith('#') ? h : '#'+h).join(' ')}</div>
+        <div class="cc-visual">
+          <div class="cv-label">Visual Direction</div>
+          <div class="cv-content" style="margin-bottom:8px">${c.ig_caption?.visual_direction || ''}</div>
+          <div class="cv-label">Story Idea</div>
+          <div class="cv-content">${c.ig_caption?.story_idea || ''}</div>
+        </div>
+      </div>
+      <div class="cc-meta">
+        <span class="meta-item">Platform: <span>Instagram</span></span>
+        <span class="meta-item">Hashtags: <span>${(c.ig_caption?.hashtags || []).length}</span></span>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="cc-header">
+        <div class="cc-type">
+          <div class="cc-icon" style="background:#000;color:#fff;font-size:10px">TT</div>
+          <span class="cc-name">TikTok Script</span>
+        </div>
+        <div class="cc-actions">
+          <button class="btn btn-copy" onclick="copyText('tt-text')">COPY SCRIPT</button>
+        </div>
+      </div>
+      <div class="cc-body">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">3-Second Hook</div>
+          <div style="font-size:14px;color:var(--accent);font-weight:500;line-height:1.5">${c.tiktok_hook?.hook || ''}</div>
+        </div>
+        <div class="cc-content" id="tt-text">HOOK (0-3 detik):\n${c.tiktok_hook?.hook || ''}\n\nSCRIPT OUTLINE:\n${c.tiktok_hook?.script_outline || ''}\n\nTREND FORMAT:\n${c.tiktok_hook?.trend_note || ''}</div>
+        ${c.tiktok_hook?.trend_note ? `<div class="cc-visual"><div class="cv-label">Format Trend yang Disarankan</div><div class="cv-content">${c.tiktok_hook.trend_note}</div></div>` : ''}
+      </div>
+    </div>
+
+    ${c.broadcast_strategy ? `<div class="content-card">
+      <div class="cc-header">
+        <div class="cc-type">
+          <div class="cc-icon" style="background:#a78bfa;color:#fff;font-size:10px">STR</div>
+          <span class="cc-name">Broadcast Strategy</span>
+        </div>
+      </div>
+      <div class="cc-body">
+        <div class="cc-content">${c.broadcast_strategy}</div>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast('Disalin ke clipboard!'));
+}
+
+function saveToHistory(content, triggers, isManual) {
+  const entry = {
+    id: '_' + Math.random().toString(36).substr(2, 9),
+    date: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+    trigger: isManual ? 'Manual Override' : triggers.slice(0,1).join(', '),
+    preview: content.wa_broadcast?.message?.slice(0, 80) + '...',
+    content,
+    triggers,
+    isManual,
+  };
+  history.unshift(entry);
+  if (history.length > 20) history.pop();
+  localStorage.setItem('affili_content_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  if (!history.length) return;
+  document.getElementById('history-section').style.display = 'block';
+  document.getElementById('history-list').innerHTML = history.slice(0, 5).map(h => `
+    <div class="history-item" onclick="loadHistory('${h.id}')">
+      <div class="hi-top">
+        <span class="hi-type" style="background:#1e3a5f;color:#60a5fa">CONTENT BATCH</span>
+        <span class="hi-date">${h.date}</span>
+      </div>
+      <div class="hi-preview">${h.preview}</div>
+      <div class="hi-trigger">Triggered by: ${h.trigger}</div>
+    </div>`).join('');
+}
+
+function loadHistory(id) {
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
+  renderContent(entry.content, entry.triggers, entry.isManual);
+  setStatus('FROM HISTORY', '#1e3a5f', '#60a5fa');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+renderHistory();
+</script>
+</body>
+</html>
