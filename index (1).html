@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affili MVP — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #080808;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 700px;
+      width: 100%;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .logo {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    
+    .tagline {
+      font-size: 14px;
+      color: #888;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    
+    .description {
+      font-size: 14px;
+      color: #aaa;
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #333, transparent);
+      margin: 40px 0;
+    }
+    
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    @media (min-width: 600px) {
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+      .card.full {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    .card {
+      background: linear-gradient(135deg, #161616 0%, #0f0f0f 100%);
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .card:hover {
+      border-color: #444;
+      background: linear-gradient(135deg, #1e1e1e 0%, #161616 100%);
+      transform: translateY(-2px);
+    }
+    
+    .card:hover::before {
+      opacity: 1;
+    }
+    
+    .card.customer:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    
+    .card.commission:hover {
+      border-color: #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+    
+    .card.content:hover {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+    }
+    
+    .card.timeline:hover {
+      border-color: #f97316;
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.1);
+    }
+    
+    .card-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    
+    .card-desc {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+      flex: 1;
+      margin-bottom: 12px;
+    }
+    
+    .card-meta {
+      font-size: 10px;
+      color: #555;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 1px solid #222;
+    }
+    
+    .footer-text {
+      font-size: 11px;
+      color: #666;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.06em;
+      line-height: 1.8;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      font-size: 9px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      margin-top: 8px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    
+    .status-badge.live {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+    
+    .status-badge.dev {
+      background: rgba(249, 115, 22, 0.1);
+      border-color: rgba(249, 115, 22, 0.3);
+      color: #f97316;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">🚀</div>
+    <h1>Affili MVP</h1>
+    <div class="tagline">FTL Gym AI Platform</div>
+    <p class="description">
+      Web-only architecture. Chatbot → Email → Admin Dashboard.<br>
+      Semua dikontrol dari 1 tempat.
+    </p>
+  </div>
+  
+  <div class="divider"></div>
+  
+  <div class="cards">
+    <a href="affili-customer.html" class="card customer">
+      <div class="card-icon">💬</div>
+      <div class="card-title">Customer Chatbot</div>
+      <div class="card-desc">AI percakapan qualify leads. Branch recommendations, objection handling, geo-based.</div>
+      <div class="card-meta">Live</div>
+      <div class="status-badge live">PRODUCTION</div>
+    </a>
+    
+    <a href="affili-commission-manager.html" class="card commission">
+      <div class="card-icon">💰</div>
+      <div class="card-title">Commission Manager</div>
+      <div class="card-desc">Track komisi, CSV import/export, PDF claim. Sync ke Supabase.</div>
+      <div class="card-meta">v1.0</div>
+      <div class="status-badge live">PRODUCTION</div>
+    </a>
+    
+    <a href="affili-content-agent.html" class="card content">
+      <div class="card-icon">✍️</div>
+      <div class="card-title">Content Agent</div>
+      <div class="card-desc">Generate WA + IG + TikTok simultan. Adaptive algorithm based on signals.</div>
+      <div class="card-meta">v1.0</div>
+      <div class="status-badge live">PRODUCTION</div>
+    </a>
+    
+    <a href="affili-timeline-tracker.html" class="card timeline full">
+      <div class="card-icon">📅</div>
+      <div class="card-title">Timeline Tracker</div>
+      <div class="card-desc">37-day implementation plan. 6 minggu, 64 jam total. Track progress real-time dengan dashboard interactive.</div>
+      <div class="card-meta">Management</div>
+      <div class="status-badge dev">REFERENCE</div>
+    </a>
+  </div>
+  
+  <div class="footer">
+    <div class="footer-text">
+      Cloudflare Pages + Supabase + Resend + Claude API<br>
+      Production-grade stack. DDoS protection, WAF, email automation included.<br>
+      <br>
+      Target Launch: 1 Juni 2026<br>
+      Status: 🔄 In Development
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
